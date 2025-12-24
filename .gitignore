@@ -11,10 +11,9 @@ env/
 # Data
 data/
 
-# Checkpoints and model weights
+# Checkpoints and model weights (training intermediates)
 checkpoints/
-*.pth
-*.pt
+# Note: trained_models/ is NOT ignored - for final models to push
 
 # TensorBoard logs
 runs/

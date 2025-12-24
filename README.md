@@ -5,11 +5,11 @@ A PyTorch implementation of an autoencoder for MNIST digit reconstruction with 2
 ## Project Structure
 
 - `model.py` - Autoencoder architecture (encoder → latent → decoder)
-- `train.py` - Training script with CLI arguments and checkpointing
-- `evaluate.py` - Validation logic
+- `run.py` - Training script with CLI arguments and checkpointing
 - `dataset.py` - MNIST data loading using HuggingFace datasets
 - `config.toml` - Model and training configuration
 - `notebooks/` - Analysis and visualization notebooks
+- `trained_models/` - Pre-trained model weights
 
 ## Installation
 
@@ -21,9 +21,25 @@ uv sync
 
 Train the model:
 ```bash
-python train.py
-python train.py --epochs 50 --batch-size 128
-python train.py --checkpoint checkpoints/last.pt  # resume training
+python run.py --train
+python run.py --train --epochs 50 --lr 1e-3 --batch_size 128
+python run.py --train --save_dir trained_models
+```
+
+Test the model:
+```bash
+python run.py  # loads checkpoints/best.pt by default
+```
+
+Load pre-trained model:
+```python
+from model import AutoEncoder
+import torch
+
+model = AutoEncoder(d_in=784)
+checkpoint = torch.load("trained_models/model.pt")
+model.load_state_dict(checkpoint["model_state_dict"])
+model.eval()
 ```
 
 ## Model Architecture
@@ -36,10 +52,11 @@ python train.py --checkpoint checkpoints/last.pt  # resume training
 ## Configuration
 
 Edit `config.toml` to modify:
-- `d_hidden` - Hidden layer size
-- `d_latent` - Latent space dimensions
-- `num_epochs` - Training epochs
-- `batch_size` - Batch size
+- `d_hidden1` - First hidden layer size (default: 256)
+- `d_hidden2` - Second hidden layer size (default: 32)
+- `d_latent` - Latent space dimensions (default: 2)
+- `num_epochs` - Training epochs (default: 100)
+- `batch_size` - Batch size (default: 64)
 
 ## Latent Space Analysis
 

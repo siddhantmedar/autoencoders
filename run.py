@@ -10,9 +10,6 @@ Usage:
     # Train with custom hyperparameters
     python train.py --train --epochs 50 --lr 1e-3 --batch_size 128
 
-    # Train with weight decay
-    python train.py --train --epochs 100 --lr 5e-4 --weight_decay 1e-4
-
     # Test model (loads best.pt by default)
     python train.py
 
@@ -23,19 +20,20 @@ Arguments:
     --train         Enable training mode (default: test mode)
     --epochs        Number of training epochs (default: 100)
     --batch_size    Batch size for training (default: 64)
-    --lr            Learning rate (default: 5e-4)
-    --weight_decay  Weight decay for regularization (default: 0.0)
+    --lr            Learning rate (default: 1e-3)
     --num_workers   Number of data loading workers (default: 4)
     --save_dir      Directory to save checkpoints (default: checkpoints)
 """
 
 import os
 import json
+import random
 from datetime import datetime
 from pathlib import Path
 import argparse
 import tomllib
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
@@ -45,13 +43,22 @@ from model import AutoEncoder
 from dataset import get_dataloaders
 
 
+def set_seed(seed=313):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
 def train(
     model,
     train_loader,
     val_loader,
     optimizer="adam",
-    weight_decay=0.0,
-    learning_rate=5e-4,
+    learning_rate=1e-3,
     epochs=100,
     save_path="checkpoints",
     device=None,
@@ -71,7 +78,6 @@ def train(
     opt = torch.optim.Adam(
         model.parameters(),
         lr=learning_rate,
-        weight_decay=weight_decay,
     )
 
     # Create save directory
@@ -80,7 +86,7 @@ def train(
     writer = SummaryWriter(log_dir=os.path.join(save_path, "runs", timestamp))
 
     print(f"Training on device: {device}")
-    print(f"Optimizer: {optimizer}, LR: {learning_rate}, WD: {weight_decay}")
+    print(f"Optimizer: {optimizer}, LR: {learning_rate}")
     print("-" * 60)
 
     best_val_loss = float("inf")
@@ -260,8 +266,7 @@ def parse_args():
     # Training
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--lr", type=float, default=5e-4)
-    parser.add_argument("--weight_decay", type=float, default=0.0)
+    parser.add_argument("--lr", type=float, default=1e-3)
 
     # Misc
     parser.add_argument("--num_workers", type=int, default=4)
@@ -274,6 +279,11 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
+    # Set seed for reproducibility
+    set_seed(313)
+    g = torch.Generator()
+    g.manual_seed(313)
+
     CONFIG_PATH = Path(__file__).parent / "config.toml"
     with open(CONFIG_PATH, "rb") as f:
         cfg = tomllib.load(f)
@@ -283,12 +293,11 @@ if __name__ == "__main__":
     num_workers = args.num_workers or cfg["training"]["num_workers"]
     epochs = args.epochs or cfg["training"]["num_epochs"]
     learning_rate = args.lr
-    weight_decay = args.weight_decay
     train_mode = args.train
 
     model = AutoEncoder(d_in=d_in)
-    train_loader = get_dataloaders(split="train", batch_size=batch_size, num_workers=num_workers)
-    val_loader = get_dataloaders(split="val", batch_size=batch_size, num_workers=num_workers)
+    train_loader = get_dataloaders(split="train", batch_size=batch_size, num_workers=num_workers, gen=g)
+    val_loader = get_dataloaders(split="val", batch_size=batch_size, num_workers=num_workers, gen=g)
 
     if train_mode:
         train(
@@ -296,7 +305,6 @@ if __name__ == "__main__":
             train_loader=train_loader,
             val_loader=val_loader,
             optimizer="adam",
-            weight_decay=weight_decay,
             learning_rate=learning_rate,
             epochs=epochs,
             save_path=args.save_dir,

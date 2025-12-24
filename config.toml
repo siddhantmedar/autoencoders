@@ -1,7 +1,8 @@
 [model]
 d_in = 784
-d_hidden = 256
-d_latent = 64
+d_hidden1 = 256
+d_hidden2 = 32
+d_latent = 2
 
 [training]
 num_epochs = 100
