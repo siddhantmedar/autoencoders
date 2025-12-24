@@ -1,0 +1,13 @@
+[model]
+d_in = 784
+d_hidden = 256
+d_latent = 64
+
+[training]
+num_epochs = 100
+batch_size = 64
+num_workers = 4
+
+[dataset]
+name = "mnist"
+data_root = "./data"
