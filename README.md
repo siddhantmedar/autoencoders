@@ -68,14 +68,12 @@ We train the autoencoder with a **2-dimensional latent space** (instead of the t
 
 ### Latent Space Evolution
 
-| Epoch 0 | Epoch 49 | Epoch 99 |
-|---------|----------|----------|
-| ![Epoch 0](docs/images/epoch_000.png) | ![Epoch 49](docs/images/epoch_049.png) | ![Epoch 99](docs/images/epoch_099.png) |
+![Latent Space Evolution](docs/latent_evolution.gif)
 
 **Key observations:**
-- **Epoch 0**: Points are randomly scattered with no clear structure
+- **Early training**: Points are randomly scattered with no clear structure
 - **Mid-training**: Digit classes begin forming distinct clusters
-- **Epoch 99**: Clear separation between most digit classes, though some overlap remains (e.g., 4/9, 3/5/8)
+- **Late training**: Clear separation between most digit classes, though some overlap remains (e.g., 4/9, 3/5/8)
 
 ### Sampling from Latent Space
 
